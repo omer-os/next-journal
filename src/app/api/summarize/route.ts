@@ -13,9 +13,10 @@ export async function POST(req: Request) {
       return Response.json({ error: "No text received" }, { status: 400 });
     }
 
-    const prompt = `Summarize this journal entry in 2-3 short sentences. Focus only on the key points and main emotions. Be concise and direct:
-
-${text}`;
+    const prompt = `Please create a concise summary of the following journal entry that captures its key points, themes, emotions, and insights. 
+      The summary should be 1-2 sentences, around 15-30 words total.
+      
+      Journal entry: "${text}"`;
 
     const response = await generateText({
       model: anthropic("claude-3-sonnet-20240229"),

@@ -14,6 +14,9 @@ dependencies:
   framer-motion:
     specifier: ^12.6.3
     version: 12.6.3(react-dom@19.1.0)(react@19.1.0)
+  jotai:
+    specifier: ^2.12.2
+    version: 2.12.2(@types/react@19.1.0)(react@19.1.0)
   lucide-react:
     specifier: ^0.487.0
     version: 0.487.0(react@19.1.0)
@@ -968,6 +971,22 @@ packages:
     resolution: {integrity: sha512-rg9zJN+G4n2nfJl5MW3BMygZX56zKPNVEYYqq7adpmMh4Jn2QNEwhvQlFy6jPVdcod7txZtKHWnyZiA3a0zP7A==}
     hasBin: true
     dev: true
+
+  /jotai@2.12.2(@types/react@19.1.0)(react@19.1.0):
+    resolution: {integrity: sha512-oN8715y7MkjXlSrpyjlR887TOuc/NLZMs9gvgtfWH/JP47ChwO0lR2ijSwBvPMYyXRAPT+liIAhuBavluKGgtA==}
+    engines: {node: '>=12.20.0'}
+    peerDependencies:
+      '@types/react': '>=17.0.0'
+      react: '>=17.0.0'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      react:
+        optional: true
+    dependencies:
+      '@types/react': 19.1.0
+      react: 19.1.0
+    dev: false
 
   /json-schema@0.4.0:
     resolution: {integrity: sha512-es94M3nTIfsEPisRafak+HDLfHXnKBhV3vU5eqPcS3flIWqcxJWgXHXiey3YrpaNsanY5ei1VoYEbOzijuq9BA==}

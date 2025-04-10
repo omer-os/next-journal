@@ -1,4 +1,4 @@
-import { JournalEntry } from "./types";
+import { JournalEntry } from "@/utils/types";
 
 const STORAGE_KEY = "next-journal-entries";
 

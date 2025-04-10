@@ -12,6 +12,7 @@
     "@ai-sdk/anthropic": "^1.2.9",
     "ai": "^4.3.4",
     "framer-motion": "^12.6.3",
+    "jotai": "^2.12.2",
     "lucide-react": "^0.487.0",
     "next": "15.2.5",
     "react": "^19.0.0",
