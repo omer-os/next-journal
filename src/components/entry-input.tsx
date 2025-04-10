@@ -1,8 +1,14 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { Paperclip, MapPin, Smile, Send, CirclePlus, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { saveJournalEntry } from "@/utils/storage";
+import { JournalEntry } from "@/utils/types";
 
-export default function App() {
+interface EntryInputProps {
+  onEntryAdded: () => void;
+}
+
+export default function EntryInput({ onEntryAdded }: EntryInputProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [text, setText] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -37,6 +43,22 @@ export default function App() {
   const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setText(event.target.value);
     // No need to call adjustTextareaHeight here, the useEffect [text] handles it
+  };
+
+  const handleSubmit = () => {
+    if (!text.trim()) return;
+
+    const newEntry: JournalEntry = {
+      id: crypto.randomUUID(),
+      text: text.trim(),
+      createdAt: new Date().toISOString(),
+      images: [],
+    };
+
+    saveJournalEntry(newEntry);
+    setText("");
+    setIsExpanded(false);
+    onEntryAdded();
   };
 
   const backdropVariants = {
@@ -163,6 +185,7 @@ export default function App() {
                     whileHover={text.trim() ? { scale: 1.05, y: -1 } : {}}
                     whileTap={text.trim() ? { scale: 0.97 } : {}}
                     transition={{ type: "spring", stiffness: 350, damping: 15 }}
+                    onClick={handleSubmit}
                   >
                     <Send size={18} />
                     Post Entry

@@ -1,66 +1,87 @@
 // app/page.jsx (or your relevant page file)
 "use client";
 
-import EntryInput from "@/components/entry-input"; // Adjust path - THIS USES THE FAB VERSION
+import EntryInput from "@/components/entry-input";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-
-const mockData = [
-  {
-    id: "1",
-    timestamp: "10:30 AM",
-    entryDate: "August 23, 2023",
-    snippet:
-      "Started working on the sales rep app. The design is almost finished. Met with Anwar and looking forward to working on projects again.",
-  },
-  {
-    id: "2",
-    timestamp: "11:45 AM",
-    entryDate: "August 24, 2023",
-    snippet:
-      "Continued working on the project. Making good progress with the implementation.",
-  },
-  {
-    id: "3",
-    timestamp: "2:15 PM",
-    entryDate: "August 25, 2023",
-    snippet:
-      "Finalizing the design and preparing for the next phase of development.",
-  },
-  {
-    id: "4",
-    timestamp: "9:00 AM",
-    entryDate: "August 26, 2023",
-    snippet:
-      "Planning meeting for the upcoming sprint. Discussed new features and priorities.",
-  },
-  {
-    id: "5",
-    timestamp: "3:30 PM",
-    entryDate: "August 27, 2023",
-    snippet:
-      "Debugging a tricky issue related to state management. Finally found the solution.",
-  },
-];
+import { JournalEntryDisplay } from "@/utils/types";
+import { getJournalEntries } from "@/utils/storage";
 
 export default function Page() {
+  const [entries, setEntries] = useState<JournalEntryDisplay[]>([]);
+
+  useEffect(() => {
+    const storedEntries = getJournalEntries();
+    const formattedEntries: JournalEntryDisplay[] = storedEntries.map(
+      (entry) => ({
+        id: entry.id,
+        timestamp: new Date(entry.createdAt).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        entryDate: new Date(entry.createdAt).toLocaleDateString("en-US", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        }),
+        snippet:
+          entry.text.slice(0, 100) + (entry.text.length > 100 ? "..." : ""),
+        text: entry.text,
+        images: entry.images,
+        summary: entry.summary,
+      })
+    );
+    setEntries(formattedEntries);
+  }, []);
+
   return (
-    <div className="px-4 py-5 ">
+    <div className="px-4 py-5">
       <div className="space-y-2.5">
-        {mockData.map((entry, index) => (
+        {entries.map((entry, index) => (
           <Card key={entry.id} entry={entry} index={index} />
         ))}
       </div>
 
-      <EntryInput />
+      <EntryInput
+        onEntryAdded={() => {
+          const storedEntries = getJournalEntries();
+          const formattedEntries: JournalEntryDisplay[] = storedEntries.map(
+            (entry) => ({
+              id: entry.id,
+              timestamp: new Date(entry.createdAt).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+              entryDate: new Date(entry.createdAt).toLocaleDateString("en-US", {
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+              }),
+              snippet:
+                entry.text.slice(0, 100) +
+                (entry.text.length > 100 ? "..." : ""),
+              text: entry.text,
+              images: entry.images,
+              summary: entry.summary,
+            })
+          );
+          setEntries(formattedEntries);
+        }}
+      />
     </div>
   );
 }
 
 // Card Component - Styled as a clean list item
-const Card = ({ entry, index }: { entry: any; index: number }) => {
+const Card = ({
+  entry,
+  index,
+}: {
+  entry: JournalEntryDisplay;
+  index: number;
+}) => {
   const cardVariants = {
     hidden: { opacity: 0, y: 15 },
     visible: {
