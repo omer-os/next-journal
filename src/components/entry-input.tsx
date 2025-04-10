@@ -1,215 +1,206 @@
-import React, { useState, useRef, useCallback } from "react";
-import {
-  Paperclip,
-  MapPin,
-  Smile,
-  Hash,
-  Mic,
-  Send,
-  Maximize2,
-  X,
-} from "lucide-react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
+import { Paperclip, MapPin, Smile, Send, CirclePlus, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { AnimateChangeInHeight } from "./ui/animate-change-in-height";
 
-interface EntryInputProps {
-  onSubmit?: (text: string) => void;
-}
-
-export default function EntryInput({ onSubmit }: EntryInputProps) {
-  const [entryText, setEntryText] = useState("");
+export default function App() {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [text, setText] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      setEntryText(e.target.value);
-      if (textareaRef.current) {
-        textareaRef.current.style.height = "auto";
-        const maxHeight = isExpanded ? Infinity : 200;
-        const scrollHeight = textareaRef.current.scrollHeight;
-        textareaRef.current.style.height = `${Math.min(
-          scrollHeight,
-          maxHeight
-        )}px`;
-      }
+  const adjustTextareaHeight = useCallback(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      // Set height based on content, respecting min/max defined in style
+      textarea.style.height = "auto";
+      const scrollHeight = textarea.scrollHeight;
+      const maxHeight = parseInt(textarea.style.maxHeight, 10) || Infinity;
+      textarea.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isExpanded && textareaRef.current) {
+      // Focus and initial height adjustment
+      textareaRef.current.focus();
+      // Delay adjustment slightly to ensure rendering is complete
+      requestAnimationFrame(adjustTextareaHeight);
+    }
+  }, [isExpanded, adjustTextareaHeight]);
+
+  // Adjust height on text input
+  useEffect(() => {
+    if (isExpanded) {
+      adjustTextareaHeight();
+    }
+  }, [text, isExpanded, adjustTextareaHeight]);
+
+  const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setText(event.target.value);
+    // No need to call adjustTextareaHeight here, the useEffect [text] handles it
+  };
+
+  const backdropVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { duration: 0.3, ease: "easeInOut" } },
+    exit: { opacity: 0, transition: { duration: 0.2, ease: "easeOut" } },
+  };
+
+  const modalVariants = {
+    hidden: { opacity: 0, scale: 0.85, y: "-40%" },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      y: "-50%",
+      transition: { type: "spring", damping: 30, stiffness: 250, mass: 0.9 },
     },
-    [isExpanded]
-  );
-
-  const handleSubmit = useCallback(() => {
-    if (!entryText.trim()) return;
-    onSubmit?.(entryText);
-    setEntryText("");
-    setIsExpanded(false);
-  }, [entryText, onSubmit]);
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      const isSubmitKey =
-        e.key === "Enter" &&
-        (isExpanded ? e.metaKey || e.ctrlKey : !e.shiftKey);
-      if (isSubmitKey) {
-        e.preventDefault();
-        handleSubmit();
-      } else if (e.key === "Escape" && isExpanded) {
-        setIsExpanded(false);
-      }
+    exit: {
+      opacity: 0,
+      scale: 0.9,
+      y: "-45%",
+      transition: { duration: 0.25, ease: "easeIn" },
     },
-    [isExpanded, handleSubmit]
-  );
+  };
 
-  const hasContent = entryText.trim().length > 0;
+  const bottomBarVariants = {
+    hidden: { y: "100%", opacity: 0 },
+    visible: {
+      y: "0%",
+      opacity: 1,
+      transition: { type: "spring", stiffness: 200, damping: 25, delay: 0.1 },
+    },
+    exit: {
+      y: "100%",
+      opacity: 0,
+      transition: { duration: 0.2, ease: "easeOut" },
+    },
+  };
 
   return (
-    <>
+    <div className="flex flex-col justify-end">
       <AnimatePresence>
         {isExpanded && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="fixed inset-0 bg-black/50 z-50 backdrop-blur-sm"
-            onClick={() => setIsExpanded(false)}
-          />
+          <>
+            <motion.div
+              key="backdrop"
+              variants={backdropVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              onClick={() => setIsExpanded(false)}
+              className="fixed inset-0 bg-black/60 z-40 backdrop-blur-md"
+            />
+
+            <motion.div
+              key="modal"
+              variants={modalVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              className="bg-white fixed top-1/2 left-1/2 z-50 -translate-x-1/2 w-[92%] max-w-2xl h-[75vh] max-h-[700px] // Increased height
+                         border border-gray-200/50 rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+              style={{ y: "-50%" }} // Ensure transform origin is correct
+            >
+              <div className="p-4 pb-2 flex flex-col h-full">
+                {/* Header/Close Button */}
+                <div className="flex items-center border-b border-gray-200/50 justify-between mb-2 flex-shrink-0">
+                  <h1 className="text-lg font-bold">New Entry</h1>
+                  <motion.button
+                    onClick={() => setIsExpanded(false)}
+                    className="p-2 rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                    whileHover={{ scale: 1.1, rotate: 90 }}
+                    whileTap={{ scale: 0.9 }}
+                    aria-label="Close modal"
+                  >
+                    <X size={22} />
+                  </motion.button>
+                </div>
+
+                {/* Textarea takes remaining space */}
+                <div className="flex-grow overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent flex">
+                  <textarea
+                    ref={textareaRef}
+                    value={text}
+                    onChange={handleInput}
+                    rows={1} // Start with 1 row, height adjusts automatically
+                    placeholder="Share your thoughts, ideas, or feelings..."
+                    className="w-full h-full focus:outline-none text-lg resize-none bg-transparent placeholder-gray-400 py-1 text-gray-800"
+                  />
+                </div>
+
+                {/* Footer Controls */}
+                <div className="flex items-center justify-between pt-3 mt-2 border-t border-gray-100 flex-shrink-0">
+                  <div className="flex items-center space-x-1">
+                    {[
+                      { icon: <Paperclip size={20} />, label: "Attach file" },
+                      { icon: <MapPin size={20} />, label: "Add location" },
+                      { icon: <Smile size={20} />, label: "Add mood" },
+                    ].map(({ icon, label }) => (
+                      <motion.button
+                        key={label}
+                        className="h-10 w-10 rounded-full flex items-center justify-center text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
+                        whileHover={{ scale: 1.15, y: -2 }}
+                        whileTap={{ scale: 0.9 }}
+                        title={label}
+                        aria-label={label}
+                        transition={{
+                          type: "spring",
+                          stiffness: 400,
+                          damping: 15,
+                        }}
+                      >
+                        {icon}
+                      </motion.button>
+                    ))}
+                  </div>
+
+                  <motion.button
+                    className={`px-6 py-2.5 rounded-full flex items-center justify-center gap-2.5 font-semibold text-sm transition-all duration-250 ease-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+                      text.trim()
+                        ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700 shadow-lg hover:shadow-blue-500/40"
+                        : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                    }`}
+                    disabled={!text.trim()}
+                    whileHover={text.trim() ? { scale: 1.05, y: -1 } : {}}
+                    whileTap={text.trim() ? { scale: 0.97 } : {}}
+                    transition={{ type: "spring", stiffness: 350, damping: 15 }}
+                  >
+                    <Send size={18} />
+                    Post Entry
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
 
-      <AnimateChangeInHeight className="shadow-lg bg-white border rounded-2xl border-gray-200">
-        <motion.div
-          initial={false}
-          animate={{
-            scale: 1,
-            y: 0,
-          }}
-          transition={{
-            type: "tween",
-            duration: 0.2,
-            ease: "easeOut",
-          }}
-          className={`flex flex-col bg-white z-50 relative ${
-            isExpanded
-              ? "fixed left-0 right-0 max-w-4xl mx-auto"
-              : "mx-auto p-3"
-          }`}
-        >
-          {isExpanded && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2 }}
-              className="flex justify-between items-center mb-2 pb-2 border-b border-gray-200 p-4"
-            >
-              <span className="text-lg font-semibold text-gray-700">
-                New Journal Entry
-              </span>
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                className="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
-                onClick={() => setIsExpanded(false)}
-                aria-label="Collapse input"
-              >
-                <X size={20} />
-              </motion.button>
-            </motion.div>
-          )}
-
-          <div
-            className={`flex items-start space-x-2 ${
-              isExpanded ? "flex-grow p-4" : ""
-            }`}
-          >
-            <motion.textarea
-              ref={textareaRef}
-              rows={1}
-              value={entryText}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              onClick={() => !isExpanded && setIsExpanded(true)}
-              placeholder="What's on your mind?"
-              className={`w-full focus:outline-none text-base resize-none bg-transparent placeholder-gray-500 ${
-                isExpanded ? "text-lg min-h-[40em]" : "py-2"
-              }`}
-            />
-          </div>
-
+      {/* New Bottom Bar Trigger */}
+      <AnimatePresence>
+        {!isExpanded && (
           <motion.div
-            initial={false}
-            animate={{
-              opacity: 1,
-              y: 0,
-            }}
-            transition={{
-              type: "tween",
-              duration: 0.2,
-            }}
-            className={`flex items-end justify-between ${
-              isExpanded ? "mt-auto p-4 border-t border-gray-200" : "pt-1"
-            }`}
+            key="bottom-bar"
+            variants={bottomBarVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className="fixed bottom-0 left-0 right-0 z-30 p-3 bg-white/90 backdrop-blur-lg"
           >
-            <motion.div
-              className="flex items-center space-x-1"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <ActionButton
-                icon={<Paperclip size={18} />}
-                label="Attach file"
-              />
-              <ActionButton icon={<MapPin size={18} />} label="Add location" />
-              <ActionButton icon={<Smile size={18} />} label="Add mood" />
-              <ActionButton icon={<Hash size={18} />} label="Add tags" />
-              {!isExpanded && (
-                <ActionButton
-                  icon={<Maximize2 size={18} />}
-                  label="Expand input"
-                  onClick={() => setIsExpanded(true)}
-                />
-              )}
-            </motion.div>
-
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleSubmit}
-              disabled={!hasContent}
-              className={`p-2.5 rounded-full flex items-center justify-center transition-all duration-200 ${
-                hasContent
-                  ? "bg-blue-600 text-white hover:bg-blue-700 shadow-md"
-                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
-              }`}
-              aria-label={hasContent ? "Send entry" : "Enter text to send"}
+              onClick={() => setIsExpanded(true)}
+              className="flex items-center gap-3 w-full max-w-md mx-auto bg-white text-gray-500 p-3 px-4 rounded-xl border border-gray-200/80 shadow-sm hover:border-gray-300 hover:text-gray-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+              whileHover={{
+                scale: 1.02,
+                borderColor: "rgb(147 197 253)",
+                boxShadow: "0 4px 12px -1px rgba(0, 0, 0, 0.07)",
+              }}
+              whileTap={{ scale: 0.98 }}
             >
-              {hasContent ? <Send size={20} /> : <Mic size={20} />}
+              <CirclePlus size={22} className="text-blue-500" />
+              <span className="font-medium text-sm">Add New Entry...</span>
             </motion.button>
           </motion.div>
-        </motion.div>
-      </AnimateChangeInHeight>
-    </>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
-
-interface ActionButtonProps {
-  icon: React.ReactNode;
-  label: string;
-  onClick?: () => void;
-}
-
-const ActionButton: React.FC<ActionButtonProps> = ({
-  icon,
-  label,
-  onClick,
-}) => (
-  <motion.button
-    whileHover={{ scale: 1.1 }}
-    whileTap={{ scale: 0.95 }}
-    className="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
-    onClick={onClick}
-    aria-label={label}
-  >
-    {icon}
-  </motion.button>
-);
