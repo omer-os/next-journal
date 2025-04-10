@@ -2,19 +2,27 @@ import { JournalEntry } from "./types";
 
 interface CachedResponse {
   response: string;
-  references: string[];
   timestamp: number;
 }
 
 const CACHE_DURATION = 1000 * 60 * 60; // 1 hour
 const CACHE_KEY = "next-journal-cache";
 
+export const clearCache = (): void => {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(CACHE_KEY);
+};
+
 export const getCache = (): Record<string, CachedResponse> => {
   if (typeof window === "undefined") return {};
 
   try {
     const cached = localStorage.getItem(CACHE_KEY);
-    return cached ? JSON.parse(cached) : {};
+    if (!cached) return {};
+
+    // Clear old cache format
+    clearCache();
+    return {};
   } catch (error) {
     console.error("Error reading cache:", error);
     return {};

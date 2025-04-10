@@ -30,8 +30,7 @@ export async function POST(request: Request) {
       return NextResponse.json(cachedResponse);
     }
 
-    // Process the question with AI
-    const { response, references } = await processJournalChat(
+    const { response } = await processJournalChat(
       entries as JournalEntry[],
       question,
       isBriefMode
@@ -40,7 +39,6 @@ export async function POST(request: Request) {
     // Cache the response
     const responseToCache = {
       response,
-      references,
       timestamp: Date.now(),
     };
     saveToCache(cacheKey, responseToCache);

@@ -14,8 +14,8 @@ export default function Page() {
 
   useEffect(() => {
     const storedEntries = getJournalEntries();
-    const formattedEntries: JournalEntryDisplay[] = storedEntries.map(
-      (entry) => ({
+    const formattedEntries: JournalEntryDisplay[] = storedEntries
+      .map((entry) => ({
         id: entry.id,
         timestamp: new Date(entry.createdAt).toLocaleTimeString([], {
           hour: "2-digit",
@@ -31,8 +31,8 @@ export default function Page() {
         text: entry.text,
         images: entry.images,
         summary: entry.summary,
-      })
-    );
+      }))
+      .reverse(); // Reverse the array to show newest entries first
     setEntries(formattedEntries);
   }, []);
 
@@ -47,8 +47,8 @@ export default function Page() {
       <EntryInput
         onEntryAdded={() => {
           const storedEntries = getJournalEntries();
-          const formattedEntries: JournalEntryDisplay[] = storedEntries.map(
-            (entry) => ({
+          const formattedEntries: JournalEntryDisplay[] = storedEntries
+            .map((entry) => ({
               id: entry.id,
               timestamp: new Date(entry.createdAt).toLocaleTimeString([], {
                 hour: "2-digit",
@@ -65,8 +65,8 @@ export default function Page() {
               text: entry.text,
               images: entry.images,
               summary: entry.summary,
-            })
-          );
+            }))
+            .reverse(); // Reverse the array to show newest entries first
           setEntries(formattedEntries);
         }}
       />

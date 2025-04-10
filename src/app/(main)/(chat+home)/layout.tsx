@@ -225,7 +225,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-100">
+    <div className="flex flex-col h-dvh bg-gray-100">
       <AnimatePresence>
         {isSidebarOpen && (
           <>

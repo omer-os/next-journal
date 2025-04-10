@@ -50,7 +50,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="flex h-screen flex-col">
+    <div className="flex h-dvh flex-col">
       <nav className="flex h-16 items-center border-b border-gray-200 bg-white px-4">
         <div className="flex w-full items-center justify-between">
           <div className="flex items-center gap-3">

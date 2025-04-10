@@ -11,7 +11,6 @@ interface Message {
   content: string;
   isUser: boolean;
   timestamp: string;
-  references?: string[];
 }
 
 export default function ChatPage() {
@@ -49,6 +48,13 @@ export default function ChatPage() {
 
     try {
       const entries = getJournalEntries();
+
+      if (entries.length === 0) {
+        throw new Error(
+          "No journal entries found. Please add some entries first."
+        );
+      }
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
@@ -61,20 +67,16 @@ export default function ChatPage() {
         }),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to get response");
-      }
-
       const data = await response.json();
 
-      // Clean up the response content by removing the references section
-      const cleanContent = data.response.split("\n[REFERENCES:")[0].trim();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to get response");
+      }
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: cleanContent,
+        content: data.response,
         isUser: false,
-        references: data.references,
         timestamp: new Date().toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
@@ -86,7 +88,10 @@ export default function ChatPage() {
       console.error("Error getting AI response:", error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: "Sorry, I couldn't process your request. Please try again.",
+        content:
+          error instanceof Error
+            ? error.message
+            : "Sorry, I couldn't process your request. Please try again.",
         isUser: false,
         timestamp: new Date().toLocaleTimeString([], {
           hour: "2-digit",
@@ -134,38 +139,6 @@ export default function ChatPage() {
                 <p className="text-[15px] leading-snug whitespace-pre-wrap">
                   {message.content}
                 </p>
-                {message.references && message.references.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {message.references.map((refId) => {
-                      const entry = getJournalEntries().find(
-                        (e) => e.id === refId
-                      );
-                      const date = entry
-                        ? new Date(entry.createdAt).toLocaleDateString(
-                            "en-US",
-                            {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            }
-                          )
-                        : "";
-                      return (
-                        <button
-                          key={refId}
-                          onClick={() => {
-                            router.push(`/entry/${refId}`);
-                          }}
-                          className="text-xs bg-gray-100 hover:bg-gray-200 px-2.5 py-1 rounded-full 
-                                   border border-gray-200 text-gray-600 flex items-center gap-1.5
-                                   transition-colors duration-150"
-                        >
-                          {date}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
                 <p
                   className={`text-xs mt-1.5 ${
                     message.isUser ? "text-blue-100" : "text-gray-500"

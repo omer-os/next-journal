@@ -8,6 +8,12 @@ dependencies:
   '@ai-sdk/anthropic':
     specifier: ^1.2.9
     version: 1.2.9(zod@3.24.2)
+  '@ai-sdk/openai':
+    specifier: ^1.3.10
+    version: 1.3.10(zod@3.24.2)
+  '@google/generative-ai':
+    specifier: ^0.24.0
+    version: 0.24.0
   ai:
     specifier: ^4.3.4
     version: 4.3.4(react@19.1.0)(zod@3.24.2)
@@ -57,6 +63,17 @@ packages:
 
   /@ai-sdk/anthropic@1.2.9(zod@3.24.2):
     resolution: {integrity: sha512-IsPKFt45rEhrAIeJisNr5hS1N6NPiVD/sBcS6wqJc2eKp32Q74SqDn6hmEgk4MlqxuWzpUCQ2kjsa75gAV3Hew==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.0.0
+    dependencies:
+      '@ai-sdk/provider': 1.1.2
+      '@ai-sdk/provider-utils': 2.2.6(zod@3.24.2)
+      zod: 3.24.2
+    dev: false
+
+  /@ai-sdk/openai@1.3.10(zod@3.24.2):
+    resolution: {integrity: sha512-XO0wF2lmAMWCYjkM5bLpWTKoXet61fBiIimTi+blqEGiLUjAvivt/1zZL1Lzhrv9+p19IC1rn9EWZI1dCelV8w==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.0.0
@@ -127,6 +144,11 @@ packages:
       tslib: 2.8.1
     dev: false
     optional: true
+
+  /@google/generative-ai@0.24.0:
+    resolution: {integrity: sha512-fnEITCGEB7NdX0BhoYZ/cq/7WPZ1QS5IzJJfC3Tg/OwkvBetMiVJciyaan297OvE4B9Jg1xvo0zIazX/9sGu1Q==}
+    engines: {node: '>=18.0.0'}
+    dev: false
 
   /@img/sharp-darwin-arm64@0.33.5:
     resolution: {integrity: sha512-UT4p+iz/2H4twwAoLCqfA9UH5pI6DggwKEGuaPy7nCVQ8ZsiY5PIcrRvD1DzuY3qYL07NtIQcWnBSY/heikIFQ==}

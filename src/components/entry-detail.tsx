@@ -19,7 +19,7 @@ export default function EntryDetail({ entry }: EntryDetailProps) {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-dvh bg-white">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b border-gray-200">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
