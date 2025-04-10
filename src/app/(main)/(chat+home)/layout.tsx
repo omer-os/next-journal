@@ -13,6 +13,12 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation"; // Hook to get current route for active state
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  getJournalEntries,
+  saveJournalEntry,
+  clearAllEntries,
+} from "@/utils/storage";
+import { JournalEntry } from "@/utils/types";
 
 interface SidebarItemProps {
   href?: string;
@@ -108,22 +114,113 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   // Placeholder action handlers (replace with actual logic)
   const handleImport = () => {
-    console.log("Trigger Import Data");
-    handleCloseSidebar();
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
+
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        const importedData = JSON.parse(text);
+
+        // Validate the imported data structure
+        if (!Array.isArray(importedData)) {
+          throw new Error(
+            "Invalid data format: Expected an array of journal entries"
+          );
+        }
+
+        // Validate each entry has required fields
+        const isValidEntry = (entry: any): entry is JournalEntry => {
+          return (
+            typeof entry.id === "string" &&
+            typeof entry.text === "string" &&
+            typeof entry.createdAt === "string" &&
+            Array.isArray(entry.images)
+          );
+        };
+
+        if (!importedData.every(isValidEntry)) {
+          throw new Error(
+            "Invalid data format: Some entries are missing required fields"
+          );
+        }
+
+        // Get existing entries
+        const existingEntries = getJournalEntries();
+        const existingIds = new Set(existingEntries.map((entry) => entry.id));
+
+        // Filter out entries that already exist
+        const newEntries = importedData.filter(
+          (entry) => !existingIds.has(entry.id)
+        );
+
+        if (newEntries.length === 0) {
+          alert("No new entries to import. All entries already exist.");
+          return;
+        }
+
+        // Save new entries
+        newEntries.forEach((entry) => {
+          saveJournalEntry(entry);
+        });
+
+        alert(`Successfully imported ${newEntries.length} new entries!`);
+        handleCloseSidebar();
+        // Refresh the page to show the new entries
+        window.location.reload();
+      } catch (error) {
+        console.error("Error importing data:", error);
+        alert(
+          "Failed to import data. Please make sure the file is a valid JSON export from Next Journal."
+        );
+      }
+    };
+
+    input.click();
   };
   const handleExport = () => {
-    console.log("Trigger Export Data");
-    handleCloseSidebar();
+    try {
+      const entries = getJournalEntries();
+      const dataStr = JSON.stringify(entries, null, 2);
+      const dataBlob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(dataBlob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `next-journal-export-${
+        new Date().toISOString().split("T")[0]
+      }.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      handleCloseSidebar();
+    } catch (error) {
+      console.error("Error exporting data:", error);
+      alert("Failed to export data. Please try again.");
+    }
   };
   const handleErase = () => {
-    // IMPORTANT: Add a confirmation dialog here!
     if (
       window.confirm(
-        "Are you sure you want to erase all data? This cannot be undone."
+        "Are you sure you want to erase all journal entries? This action cannot be undone."
       )
     ) {
-      console.warn("Trigger Erase All Data");
-      handleCloseSidebar();
+      try {
+        clearAllEntries();
+        alert("All journal entries have been erased successfully.");
+        handleCloseSidebar();
+        // Refresh the page to reflect the changes
+        window.location.reload();
+      } catch (error) {
+        console.error("Error erasing data:", error);
+        alert("Failed to erase data. Please try again.");
+      }
     }
   };
 
@@ -197,12 +294,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </div>
                 <SidebarItem
                   label="Import Data"
-                  icon={Upload}
+                  icon={Download}
                   onClick={handleImport}
                 />
                 <SidebarItem
                   label="Export Data"
-                  icon={Download}
+                  icon={Upload}
                   onClick={handleExport}
                 />
 

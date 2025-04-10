@@ -275,7 +275,7 @@ export default function EntryInput({ onEntryAdded }: EntryInputProps) {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="fixed bottom-0 left-0 right-0 z-30 p-3 bg-white/90 backdrop-blur-lg"
+            className="fixed bottom-0 left-0 right-0 z-30 p-3"
           >
             <motion.button
               onClick={() => setIsExpanded(true)}

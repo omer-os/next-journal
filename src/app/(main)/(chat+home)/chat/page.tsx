@@ -67,9 +67,12 @@ export default function ChatPage() {
 
       const data = await response.json();
 
+      // Clean up the response content by removing the references section
+      const cleanContent = data.response.split("\n[REFERENCES:")[0].trim();
+
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: data.response,
+        content: cleanContent,
         isUser: false,
         references: data.references,
         timestamp: new Date().toLocaleTimeString([], {
@@ -190,7 +193,7 @@ export default function ChatPage() {
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-gray-200/70 bg-white/85 backdrop-blur-lg">
+      <div className="p-4">
         <div className="flex items-center gap-2 max-w-3xl mx-auto">
           <div className="flex-1 relative">
             <input

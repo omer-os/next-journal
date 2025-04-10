@@ -37,7 +37,7 @@ export default function Page() {
   }, []);
 
   return (
-    <div className="px-4 py-5">
+    <div className="px-4 py-5 pb-32">
       <div className="space-y-2.5">
         {entries.map((entry, index) => (
           <Card key={entry.id} entry={entry} index={index} />
