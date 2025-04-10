@@ -1,8 +1,11 @@
+// app/page.jsx (or your relevant page file)
 "use client";
-import EntryInput from "@/components/entry-input";
-import { ChevronRight, Trash2 } from "lucide-react";
+
+import EntryInput from "@/components/entry-input"; // Adjust path - THIS USES THE FAB VERSION
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import React from "react";
+import { motion } from "framer-motion";
 
 const mockData = [
   {
@@ -26,45 +29,76 @@ const mockData = [
     snippet:
       "Finalizing the design and preparing for the next phase of development.",
   },
+  {
+    id: "4",
+    timestamp: "9:00 AM",
+    entryDate: "August 26, 2023",
+    snippet:
+      "Planning meeting for the upcoming sprint. Discussed new features and priorities.",
+  },
+  {
+    id: "5",
+    timestamp: "3:30 PM",
+    entryDate: "August 27, 2023",
+    snippet:
+      "Debugging a tricky issue related to state management. Finally found the solution.",
+  },
 ];
 
 export default function Page() {
   return (
-    <div className="flex flex-col flex-1">
-      <div className="p-4 flex flex-col flex-1 gap-4">
-        {mockData.map((entry) => (
-          <Card key={entry.id} entry={entry} />
+    <>
+      <div className="space-y-2.5">
+        {mockData.map((entry, index) => (
+          <Card key={entry.id} entry={entry} index={index} />
         ))}
       </div>
 
-      <div className="p-4">
-        <EntryInput />
-      </div>
-    </div>
+      <EntryInput />
+    </>
   );
 }
 
-const Card = ({
-  entry,
-}: {
-  entry: {
-    id: string;
-    timestamp: string;
-    entryDate: string;
-    snippet: string;
+// Card Component - Styled as a clean list item
+const Card = ({ entry, index }: { entry: any; index: number }) => {
+  const cardVariants = {
+    hidden: { opacity: 0, y: 15 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.4,
+        delay: index * 0.06,
+        ease: [0.25, 0.1, 0.25, 1.0],
+      }, // Smoother ease, staggered delay
+    },
   };
-}) => {
+
   return (
-    <Link href={`/entry/${entry.id}`} className="block relative">
-      <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 p-4 border border-gray-100">
-        <div className="text-zinc-500 absolute top-4 right-4">
-          <ChevronRight size={16} />
+    <motion.div variants={cardVariants} initial="hidden" animate="visible">
+      <Link
+        href={`/entry/${entry.id}`}
+        className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200/80 
+                   hover:bg-gray-50 active:bg-gray-100 active:scale-[0.99] 
+                   transition-all duration-150 cursor-pointer group shadow-sm hover:shadow-md"
+      >
+        {/* Content */}
+        <div className="flex-grow overflow-hidden mr-3">
+          <p className="text-xs font-medium text-gray-500 mb-1.5 truncate">
+            {entry.entryDate} &middot; {entry.timestamp}{" "}
+            {/* Cleaner date/time format */}
+          </p>
+          <p className="text-[15px] text-gray-800 line-clamp-2 leading-snug">
+            {" "}
+            {/* Slightly larger snippet text */}
+            {entry.snippet}
+          </p>
         </div>
-        <h3 className="font-semibold text-gray-900 mb-2">{entry.entryDate}</h3>
-        <p className="text-gray-600 line-clamp-2 text-sm leading-relaxed">
-          {entry.snippet}
-        </p>
-      </div>
-    </Link>
+        {/* Chevron Indicator */}
+        <div className="flex-shrink-0 text-gray-300 group-hover:text-gray-500 transition-colors">
+          <ChevronRight size={20} strokeWidth={2.5} />
+        </div>
+      </Link>
+    </motion.div>
   );
 };
