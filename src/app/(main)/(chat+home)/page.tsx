@@ -47,7 +47,7 @@ const mockData = [
 
 export default function Page() {
   return (
-    <>
+    <div className="px-4 py-5 ">
       <div className="space-y-2.5">
         {mockData.map((entry, index) => (
           <Card key={entry.id} entry={entry} index={index} />
@@ -55,7 +55,7 @@ export default function Page() {
       </div>
 
       <EntryInput />
-    </>
+    </div>
   );
 }
 

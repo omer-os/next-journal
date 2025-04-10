@@ -128,9 +128,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-100">
-      {" "}
-      {/* Slightly off-white bg */}
+    <div className="flex flex-col h-screen bg-gray-100">
       <AnimatePresence>
         {isSidebarOpen && (
           <>
@@ -232,7 +230,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </>
         )}
       </AnimatePresence>
-      {/* Navbar */}
       <nav
         className={`sticky z-30 top-0 left-0 right-0 h-16 // z-index lower than sidebar/backdrop
                       bg-white/85 backdrop-blur-lg
@@ -258,13 +255,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {/* Placeholder for right-side icons */}
         <div className="flex items-center gap-2"></div>
       </nav>
-      {/* Main Content Area */}
+
       <main
-        className={`flex-grow w-full max-w-3xl mx-auto px-4 py-5 transition-filter duration-300 ${
+        className={`flex-1 w-full max-w-3xl mx-auto transition-filter overflow-auto duration-300 ${
           isSidebarOpen ? "blur-sm md:blur-none" : "blur-none"
         }`}
       >
-        {" "}
         {/* Optional: Blur content when sidebar open on mobile */}
         {children}
       </main>
