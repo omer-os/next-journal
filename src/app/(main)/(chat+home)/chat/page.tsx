@@ -1,21 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Send, Loader2, Briefcase } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { getJournalEntries } from "@/utils/storage";
+import { useRouter } from "next/navigation";
 
 interface Message {
   id: string;
   content: string;
   isUser: boolean;
   timestamp: string;
+  references?: string[];
 }
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isBriefMode, setIsBriefMode] = useState(false);
+  const [isBriefMode, setIsBriefMode] = useState(true);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -34,22 +47,53 @@ export default function ChatPage() {
     setInput("");
     setIsLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
+    try {
+      const entries = getJournalEntries();
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          question: input,
+          isBriefMode,
+          entries,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to get response");
+      }
+
+      const data = await response.json();
+
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: isBriefMode
-          ? "Here's a brief response based on your journal data..."
-          : "Here's a detailed response based on your journal data...",
+        content: data.response,
+        isUser: false,
+        references: data.references,
+        timestamp: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      };
+
+      setMessages((prev) => [...prev, aiMessage]);
+    } catch (error) {
+      console.error("Error getting AI response:", error);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: "Sorry, I couldn't process your request. Please try again.",
         isUser: false,
         timestamp: new Date().toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
         }),
       };
-      setMessages((prev) => [...prev, aiMessage]);
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -60,7 +104,7 @@ export default function ChatPage() {
           className="rounded-full bg-gray-100 p-1 px-2 text-xs flex items-center gap-1"
         >
           <Briefcase size={16} strokeWidth={2} />
-          {isBriefMode ? "Brief" : "Detailed"} Mode
+          Switch to {isBriefMode ? "Detailed" : "Brief"} Mode
         </button>
       </div>
 
@@ -84,7 +128,41 @@ export default function ChatPage() {
                     : "bg-white text-gray-800 rounded-bl-none shadow-sm border border-gray-200/80"
                 }`}
               >
-                <p className="text-[15px] leading-snug">{message.content}</p>
+                <p className="text-[15px] leading-snug whitespace-pre-wrap">
+                  {message.content}
+                </p>
+                {message.references && message.references.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {message.references.map((refId) => {
+                      const entry = getJournalEntries().find(
+                        (e) => e.id === refId
+                      );
+                      const date = entry
+                        ? new Date(entry.createdAt).toLocaleDateString(
+                            "en-US",
+                            {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            }
+                          )
+                        : "";
+                      return (
+                        <button
+                          key={refId}
+                          onClick={() => {
+                            router.push(`/entry/${refId}`);
+                          }}
+                          className="text-xs bg-gray-100 hover:bg-gray-200 px-2.5 py-1 rounded-full 
+                                   border border-gray-200 text-gray-600 flex items-center gap-1.5
+                                   transition-colors duration-150"
+                        >
+                          {date}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
                 <p
                   className={`text-xs mt-1.5 ${
                     message.isUser ? "text-blue-100" : "text-gray-500"
@@ -108,6 +186,7 @@ export default function ChatPage() {
             </div>
           </motion.div>
         )}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}

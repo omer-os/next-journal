@@ -1,5 +1,13 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import { Paperclip, MapPin, Smile, Send, CirclePlus, X } from "lucide-react";
+import {
+  Paperclip,
+  MapPin,
+  Smile,
+  Send,
+  CirclePlus,
+  X,
+  Loader2,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { saveJournalEntry } from "@/utils/storage";
 import { JournalEntry } from "@/utils/types";
@@ -8,9 +16,32 @@ interface EntryInputProps {
   onEntryAdded: () => void;
 }
 
+const generateSummary = async (text: string): Promise<string> => {
+  try {
+    const response = await fetch("/api/summarize", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ text }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to generate summary");
+    }
+
+    const data = await response.json();
+    return data.summary;
+  } catch (error) {
+    console.error("Error generating summary:", error);
+    return "Failed to generate summary";
+  }
+};
+
 export default function EntryInput({ onEntryAdded }: EntryInputProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [text, setText] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const adjustTextareaHeight = useCallback(() => {
@@ -45,20 +76,30 @@ export default function EntryInput({ onEntryAdded }: EntryInputProps) {
     // No need to call adjustTextareaHeight here, the useEffect [text] handles it
   };
 
-  const handleSubmit = () => {
-    if (!text.trim()) return;
+  const handleSubmit = async () => {
+    if (!text.trim() || isSubmitting) return;
 
-    const newEntry: JournalEntry = {
-      id: crypto.randomUUID(),
-      text: text.trim(),
-      createdAt: new Date().toISOString(),
-      images: [],
-    };
+    try {
+      setIsSubmitting(true);
+      const summary = await generateSummary(text.trim());
 
-    saveJournalEntry(newEntry);
-    setText("");
-    setIsExpanded(false);
-    onEntryAdded();
+      const newEntry: JournalEntry = {
+        id: crypto.randomUUID(),
+        text: text.trim(),
+        createdAt: new Date().toISOString(),
+        images: [],
+        summary,
+      };
+
+      saveJournalEntry(newEntry);
+      setText("");
+      setIsExpanded(false);
+      onEntryAdded();
+    } catch (error) {
+      console.error("Error creating entry:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const backdropVariants = {
@@ -159,11 +200,12 @@ export default function EntryInput({ onEntryAdded }: EntryInputProps) {
                     ].map(({ icon, label }) => (
                       <motion.button
                         key={label}
-                        className="h-10 w-10 rounded-full flex items-center justify-center text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
+                        className="h-10 w-10 rounded-full flex items-center justify-center text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                         whileHover={{ scale: 1.15, y: -2 }}
                         whileTap={{ scale: 0.9 }}
                         title={label}
                         aria-label={label}
+                        disabled={isSubmitting}
                         transition={{
                           type: "spring",
                           stiffness: 400,
@@ -177,18 +219,45 @@ export default function EntryInput({ onEntryAdded }: EntryInputProps) {
 
                   <motion.button
                     className={`px-6 py-2.5 rounded-full flex items-center justify-center gap-2.5 font-semibold text-sm transition-all duration-250 ease-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-                      text.trim()
+                      text.trim() && !isSubmitting
                         ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700 shadow-lg hover:shadow-blue-500/40"
                         : "bg-gray-200 text-gray-500 cursor-not-allowed"
                     }`}
-                    disabled={!text.trim()}
-                    whileHover={text.trim() ? { scale: 1.05, y: -1 } : {}}
-                    whileTap={text.trim() ? { scale: 0.97 } : {}}
+                    disabled={!text.trim() || isSubmitting}
+                    whileHover={
+                      text.trim() && !isSubmitting ? { scale: 1.05, y: -1 } : {}
+                    }
+                    whileTap={
+                      text.trim() && !isSubmitting ? { scale: 0.97 } : {}
+                    }
                     transition={{ type: "spring", stiffness: 350, damping: 15 }}
                     onClick={handleSubmit}
                   >
-                    <Send size={18} />
-                    Post Entry
+                    <AnimatePresence mode="wait">
+                      {isSubmitting ? (
+                        <motion.div
+                          key="loading"
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="send"
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          transition={{ duration: 0.2 }}
+                          className="flex items-center gap-2"
+                        >
+                          <Send size={18} />
+                          <span>Post Entry</span>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </motion.button>
                 </div>
               </div>

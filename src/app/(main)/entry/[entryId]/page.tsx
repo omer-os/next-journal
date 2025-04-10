@@ -48,6 +48,14 @@ export default function EntryPage() {
   return (
     <div className="max-w-2xl mx-auto rounded-lg p-6">
       <div className="space-y-6">
+        {/* Summary */}
+        {entry.summary && (
+          <div className="bg-white p-4 rounded-lg border border-gray-200 ">
+            <h2 className="text-sm font-medium text-gray-500 mb-2">Summary</h2>
+            <p className="text-gray-700">{entry.summary}</p>
+          </div>
+        )}
+
         {/* Date and Time */}
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold text-gray-900">
@@ -73,14 +81,6 @@ export default function EntryPage() {
                 />
               </div>
             ))}
-          </div>
-        )}
-
-        {/* Summary */}
-        {entry.summary && (
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h2 className="text-sm font-medium text-gray-500 mb-2">Summary</h2>
-            <p className="text-gray-700">{entry.summary}</p>
           </div>
         )}
       </div>
